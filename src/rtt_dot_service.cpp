@@ -73,7 +73,11 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
     // Loop over all ports
     for(unsigned int j = 0; j < comp_ports.size(); j++){
       log(Debug) << "Port: " << comp_ports[j] << endlog();
+#if RTT_VERSION_MAJOR == 2 && RTT_VERSION_MINOR <= 8
       std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getChannels();
+#else // rtt-2.9 support
+      std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getConnections();
+#endif
       std::list<internal::ConnectionManager::ChannelDescriptor>::iterator k;
       if(chns.empty()){
         log(Debug) << "Looks like we have an empty channel!" << endlog();
