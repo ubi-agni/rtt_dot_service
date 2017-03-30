@@ -38,6 +38,7 @@
 #include "rtt_dot_service.hpp"
 #include <boost/algorithm/string.hpp>
 #include <fstream>
+#include <rtt/rtt-config.h>
 
 Dot::Dot(TaskContext* owner)
     : Service("dot", owner), base::ExecutableInterface()
@@ -73,10 +74,10 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
     // Loop over all ports
     for(unsigned int j = 0; j < comp_ports.size(); j++){
       log(Debug) << "Port: " << comp_ports[j] << endlog();
-#if RTT_VERSION_MAJOR == 2 && RTT_VERSION_MINOR <= 8
-      std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getChannels();
-#else // rtt-2.9 support
+#ifdef RTT_VERSION_GTE(2,8,99)
       std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getConnections();
+#else
+      std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getChannels();
 #endif
       std::list<internal::ConnectionManager::ChannelDescriptor>::iterator k;
       if(chns.empty()){
