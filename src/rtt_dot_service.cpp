@@ -74,7 +74,7 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
     // Loop over all ports
     for(unsigned int j = 0; j < comp_ports.size(); j++){
       log(Debug) << "Port: " << comp_ports[j] << endlog();
-#ifdef RTT_VERSION_GTE(2,8,99)
+#if RTT_VERSION_GTE(2,8,99)
       std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getConnections();
 #else
       std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getChannels();
