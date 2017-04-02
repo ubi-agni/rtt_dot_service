@@ -144,7 +144,7 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
             // If the ConnPolicy has a non-empty name, use that name as the topic name
             if(!cp.name_id.empty()){
               // plot the channel element as a seperate box and connect input and output with it
-              m_dot << comp_in <<":"<<comp_ports_map[comp_in][port_in] << " -> " << quote(cp.name_id);
+              m_dot << comp_in <<":"<<comp_ports_map[comp_in][port_in] << " -> " << quote(cp.name_id) << " [color=\"#2a4563\",style=bold];\n";
             //   m_dot << quote(cp.name_id) << "[" << m_chan_args << "label=" << quote(cp.name_id) << "];\n";
             //   m_dot << quote(comp_in) << "->" << quote(cp.name_id) << "[" << m_conn_args << "label=" << quote(port_in) << "];\n";
             //   m_dot << quote(cp.name_id) << "->" << quote(comp_out) << "[" << m_conn_args << "label=" << quote(port_out) << "];\n";
@@ -152,7 +152,7 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
             // Else, use a custom name: compInportIncompOutportOut
             else{
               // plot the channel element as a seperate box and connect input and output with it
-              m_dot << comp_in <<":"<<comp_ports_map[comp_in][port_in] <<" -> "<< comp_out <<":"<<comp_ports_map[comp_out][port_out]/*<<" [label=" << conn_info << "];*/<<"\n";
+              m_dot << comp_in <<":"<<comp_ports_map[comp_in][port_in] <<" -> "<< comp_out <<":"<<comp_ports_map[comp_out][port_out]<< " [color=\"#2a4563\",style=bold];\n";
             //   m_dot << quote(comp_in + port_in + comp_out + port_out) << "[" << m_chan_args << "label=" << quote(conn_info) << "];\n";
             //   m_dot << quote(comp_in) << "->" << quote(comp_in + port_in + comp_out + port_out) << "[" << m_conn_args << "label=" << quote(port_in) << "];\n";
             //   m_dot << quote(comp_in + port_in + comp_out + port_out) << "->" << comp_out << "[" << m_conn_args << "label=" << quote(port_out) << "];\n";
@@ -162,13 +162,13 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
               switch(cp.transport)
               {
                   case 1:
-                    m_dot << " [" << m_conn_args << "label=CORBA];";
+                    m_dot << " [" << m_conn_args << "label=CORBA,style=dashed];";
                     break;
                   case 2:
-                    m_dot << " [" << m_conn_args << "label=MQ];";
+                    m_dot << " [" << m_conn_args << "label=MQ,style=dashed];";
                     break;
                   case 3:
-                    m_dot << " [" << m_conn_args << "label=ROS];";
+                    m_dot << " [" << m_conn_args << "label=ROS,style=dashed];";
                     break;
                 default:
                     break;
@@ -189,13 +189,13 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
               switch(cp.transport)
               {
                   case 1:
-                    m_dot << " [" << m_conn_args << "label=CORBA];";
+                    m_dot << " [" << m_conn_args << "label=CORBA,style=dashed];";
                     break;
                   case 2:
-                    m_dot << " [" << m_conn_args << "label=MQ];";
+                    m_dot << " [" << m_conn_args << "label=MQ,style=dashed];";
                     break;
                   case 3:
-                    m_dot << " [" << m_conn_args << "label=ROS];";
+                    m_dot << " [" << m_conn_args << "label=ROS,style=dashed];";
                     break;
                 default:
                     break;
