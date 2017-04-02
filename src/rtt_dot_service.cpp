@@ -275,12 +275,14 @@ bool Dot::execute(){
   m_dot << "nodesep=0.5; \n";
   m_dot << "ranksep=1.5; \n";
   m_dot << "fontname=\"sans\";\n";
+  // m_dot << "labelloc=\"t\";\n";
+  // m_dot << "fontsize=25;\n";
+  // m_dot << "label=" << this->getOwner()->getName()<<";\n";
   m_dot << "node [style=\"rounded,filled\",fontsize=15,color=\"#777777\",fillcolor=\"#eeeeee\"];\n";
-  //m_dot << "edge [arrowhead=normal,arrowtail=dot,dir=both];\n";
   // List all peers of this component
   std::vector<std::string> peerList = this->getOwner()->getPeerList();
   // Add the component itself as well
-  peerList.push_back(this->getOwner()->getName());
+  //peerList.push_back(this->getOwner()->getName());
   if(peerList.size() == 0){
     log(Debug) << "Component has no peers!" << endlog();
   }
