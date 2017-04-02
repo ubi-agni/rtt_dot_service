@@ -43,14 +43,13 @@
 
 #include <rtt/plugin/ServicePlugin.hpp>
 #include <rtt/base/ExecutableInterface.hpp>
+#include <rtt/base/TaskCore.hpp>
 #include <rtt/RTT.hpp>
-
-using namespace RTT;
 
 class Dot : public RTT::Service, public RTT::base::ExecutableInterface {
   public:
     // Constructor
-    Dot(TaskContext* owner);
+    Dot(RTT::TaskContext* owner);
     std::string getOwnerName();
 
     /** \brief Generate DOT file for the current deployment configuration
@@ -71,9 +70,12 @@ class Dot : public RTT::Service, public RTT::base::ExecutableInterface {
     std::string m_chan_args;
     //@}
   private:
+    // Component name , with portname + shortcut (i0, o0 etc)
+    std::map<std::string,std::map<std::string,std::string> > comp_ports_map;
     std::stringstream m_dot;
     std::string mpeer;
     std::string quote(std::string const& name);
     void scanService(std::string path, Service::shared_ptr sv);
+    void buildComponentPortsMap(std::string path, Service::shared_ptr sv, bool input_ports, int current_count);
 };
 #endif
