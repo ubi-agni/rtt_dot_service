@@ -1,6 +1,6 @@
 <package>
   <name>rtt_dot_service</name>
-  <version>0.0.1</version>
+  <version>1.0.0</version>
   <description >
     Orocos rtt_dot_service package
 
@@ -51,7 +51,7 @@
     More information about the DOT language is available at http://www.graphviz.org/doc/info/lang.html and http://www.graphviz.org/Documentation/dotguide.pdf
 
   </description>
-  <maintainer email="steven.bellens@mech.kuleuven.be" >Steven Bellens</maintainer>
+  <maintainer email="hoarau.robotics@gmail.com" >Antoine Hoarau</maintainer>
   <author>Steven Bellens - steven.bellens@mech.kuleuven.be</author>
   <license>LGPLv2.1 / BSD</license>
   <url>http://ros.org/wiki/rtt_dot_service</url>
