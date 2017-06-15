@@ -85,13 +85,13 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
       std::list<internal::ConnectionManager::ChannelDescriptor> chns = sv->getPort(comp_ports[j])->getManager()->getChannels();
 #endif
       std::list<internal::ConnectionManager::ChannelDescriptor>::iterator k;
-      
+
       bool is_input_port = (dynamic_cast<base::InputPortInterface*>(sv->getPort(comp_ports[j])) != 0);
-      
+
       for(k = chns.begin(); k != chns.end(); k++){
         base::ChannelElementBase::shared_ptr bs = k->get<1>();
         ConnPolicy cp = k->get<2>();
-        
+
         // Get input component name
         std::string comp_in, port_in;
         if(bs->getInputEndPoint()->getPort() != 0){
@@ -116,9 +116,9 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
           port_out = bs->getOutputEndPoint()->getPort()->getName();
         }
 
-        log(Debug) << "          Connection : [" << comp_in << "]@"<<port_in<<" <-> "<<port_out<<"@["<< comp_out <<"]"<< endlog();
-        
-        
+        log(Debug) << "          Connection : [" << comp_in << "] "<<port_in<<" <-> "<< "[" << comp_out << "] " << port_out << endlog();
+
+
         std::string conn_info;
         std::stringstream ss;
         switch(cp.type){
@@ -237,7 +237,8 @@ void Dot::buildComponentPortsMap(std::string path, Service::shared_ptr sv, bool 
             if(is_input_port)
             {
                 comp_ports_map[mpeer][comp_ports[j]] = "i" + to_string(current_count);
-                m_dot << (current_count++>0 ? " | ":"") << "<i" << to_string(current_count) <<">"<< comp_ports[j];
+                m_dot << (current_count>0 ? " | ":"") << "<i" << to_string(current_count) <<">"<< comp_ports[j];
+                current_count++;
             }
           }
           // recurse for inputs
@@ -256,7 +257,8 @@ void Dot::buildComponentPortsMap(std::string path, Service::shared_ptr sv, bool 
             if(is_output_port)
             {
                 comp_ports_map[mpeer][comp_ports[j]] = "o" + to_string(current_count);
-                m_dot << (current_count++>0 ? " | ":"") << "<o" << to_string(current_count) <<">"<< comp_ports[j];
+                m_dot << (current_count>0 ? " | ":"") << "<o" << to_string(current_count) <<">"<< comp_ports[j];
+                current_count++;
             }
           }
           // recurse for ouputs
@@ -264,7 +266,7 @@ void Dot::buildComponentPortsMap(std::string path, Service::shared_ptr sv, bool 
           for(Service::ProviderNames::iterator it=providers.begin(); it != providers.end(); ++it) {
               buildComponentPortsMap(path + "." + sv->getName(), sv->provides(*it) ,false,current_count);
           }
-      } 
+      }
 }
 
 bool Dot::execute(){
@@ -286,10 +288,10 @@ bool Dot::execute(){
   if(peerList.size() == 0){
     log(Debug) << "Component has no peers!" << endlog();
   }
-  
+
   // Reset the map
   comp_ports_map.clear();
-  
+
   for(unsigned int i = 0; i < peerList.size(); i++)
   {
     mpeer = peerList[i];
@@ -302,10 +304,10 @@ bool Dot::execute(){
     else{
       tc = this->getOwner()->getPeer(mpeer);
     }
-    
+
     base::TaskCore::TaskState st;
     st = tc->getTaskState();
-    
+
     std::string st_str,color;
     switch (st){
         case base::TaskCore::Init          : st_str = "Init          ";color = "white";       break;
@@ -316,7 +318,7 @@ bool Dot::execute(){
         case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";       break;
         case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
     }
-    
+
     m_dot << mpeer << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
     buildComponentPortsMap("",tc->provides(),true,0);
     m_dot << " } | | { ";
@@ -335,7 +337,7 @@ bool Dot::execute(){
     else{
       tc = this->getOwner()->getPeer(mpeer);
     }
-    
+
     // Draw in/out ports
     scanService("",tc->provides());
   }
