@@ -40,8 +40,6 @@
 #include <rtt/rtt-config.h>
 #include <sstream>
 
-#define to_string( x ) static_cast< std::ostringstream & >( std::stringstream() << std::dec << x ).str()
-
 using namespace RTT;
 
 Dot::Dot(TaskContext* owner)
@@ -61,11 +59,13 @@ Dot::Dot(TaskContext* owner)
     //owner->engine()->runFunction(this);
 }
 
-std::string Dot::getOwnerName() {
+std::string Dot::getOwnerName()
+{
     return getOwner()->getName();
 }
 
-std::string Dot::quote(std::string const& name){
+std::string Dot::quote(std::string const& name)
+{
   return "\"" + name + "\"";
 }
 
@@ -224,52 +224,71 @@ void Dot::scanService(std::string path, Service::shared_ptr sv)
     }
 }
 
-void Dot::buildComponentPortsMap(std::string path, Service::shared_ptr sv, bool input_ports, int current_count)
+std::string Dot::appendToPath(const std::string& path,const std::string& sub)
 {
-      std::vector<std::string> comp_ports = sv->getPortNames();
-
-      if(input_ports)
-      {
-          // Build the input ports
-          for(unsigned int j = 0; j < comp_ports.size(); j++)
-          {
-            bool is_input_port = (dynamic_cast<base::InputPortInterface*>(sv->getPort(comp_ports[j])) != 0);
-            if(is_input_port)
-            {
-                comp_ports_map[mpeer][comp_ports[j]] = "i" + to_string(current_count);
-                m_dot << (current_count>0 ? " | ":"") << "<i" << to_string(current_count) <<">"<< comp_ports[j];
-                current_count++;
-            }
-          }
-          // recurse for inputs
-          Service::ProviderNames providers = sv->getProviderNames();
-          for(Service::ProviderNames::iterator it=providers.begin(); it != providers.end(); ++it) {
-              buildComponentPortsMap(path + "." + sv->getName(), sv->provides(*it) ,true,current_count);
-          }
-
-      }
-      else
-      {
-          // Build the output ports
-          for(unsigned int j = 0; j < comp_ports.size(); j++)
-          {
-            bool is_output_port = (dynamic_cast<base::OutputPortInterface*>(sv->getPort(comp_ports[j])) != 0);
-            if(is_output_port)
-            {
-                comp_ports_map[mpeer][comp_ports[j]] = "o" + to_string(current_count);
-                m_dot << (current_count>0 ? " | ":"") << "<o" << to_string(current_count) <<">"<< comp_ports[j];
-                current_count++;
-            }
-          }
-          // recurse for ouputs
-          Service::ProviderNames providers = sv->getProviderNames();
-          for(Service::ProviderNames::iterator it=providers.begin(); it != providers.end(); ++it) {
-              buildComponentPortsMap(path + "." + sv->getName(), sv->provides(*it) ,false,current_count);
-          }
-      }
+    if(path.empty())
+        return sub;
+    return path + "." + sub;
 }
 
-bool Dot::execute(){
+void Dot::buildComponentOutputPortsMap(std::string path, Service::shared_ptr sv, int& current_count)
+{
+    std::vector<std::string> comp_ports = sv->getPortNames();
+    // Build the output ports
+    for(unsigned int j = 0; j < comp_ports.size(); j++)
+    {
+    bool is_output_port = (dynamic_cast<base::OutputPortInterface*>(sv->getPort(comp_ports[j])) != 0);
+    if(is_output_port)
+    {
+        comp_ports_map[mpeer][comp_ports[j]] = "o" + std::to_string(current_count);
+        m_dot << (current_count>0 ? " | ":"") << "<o" << std::to_string(current_count) <<">"<< comp_ports[j];
+        current_count++;
+    }
+    }
+    // recurse for ouputs
+    Service::ProviderNames providers = sv->getProviderNames();
+    for(Service::ProviderNames::iterator it=providers.begin(); it != providers.end(); ++it) {
+        buildComponentOutputPortsMap(appendToPath(path , sv->getName()), sv->provides(*it) ,current_count);
+    }
+}
+
+void Dot::buildComponentInputPortsMap(std::string path, Service::shared_ptr sv, int& current_count)
+{
+    log(Debug) << "Dot::buildComponentInputPortsMap path=" << path << " sv=" << sv->getName() << " current_count=" << current_count << endlog();
+
+    // Build the input ports
+    for(auto port : sv->getPortNames())
+    {
+        std::cout << "     port " << port << endlog();
+        bool is_input_port = (dynamic_cast<base::InputPortInterface*>(sv->getPort(port)) != 0);
+        if(is_input_port)
+        {
+            log(Debug) << "         ---> is input" << endlog();
+            comp_ports_map[mpeer][port] = "i" + std::to_string(current_count);
+            m_dot << (current_count>0 ? " | ":"") << "<i" << std::to_string(current_count) <<">"<< port;
+            current_count++;
+        }
+    }
+//     for(auto operation_name : sv->getOperationNames())
+//     {
+//         std::cout << "     operation " << operation_name << endlog();
+//         auto operation = sv->getOperation(operation_name);
+//         log(Debug) << "         ---> is input" << endlog();
+//         comp_ports_map[mpeer][operation_name] = "i" + std::to_string(current_count);
+//         m_dot << (current_count>0 ? " | ":"") << "<i" << std::to_string(current_count) <<">"<< operation_name;
+//         current_count++;
+//     }
+    // recurse for inputs
+    Service::ProviderNames providers = sv->getProviderNames();
+    for(Service::ProviderNames::iterator it=providers.begin(); it != providers.end(); ++it)
+    {
+        buildComponentInputPortsMap(appendToPath(path , sv->getName()), sv->provides(*it),current_count);
+    }
+}
+
+
+bool Dot::execute()
+{
   m_dot.str("");
   m_dot << "digraph G { \n";
   m_dot << "graph[splines=true, overlap=false] \n";
@@ -284,9 +303,10 @@ bool Dot::execute(){
   // List all peers of this component
   std::vector<std::string> peerList = this->getOwner()->getPeerList();
   // Add the component itself as well
-  //peerList.push_back(this->getOwner()->getName());
-  if(peerList.size() == 0){
+  if(peerList.size() == 0)
+  {
     log(Debug) << "Component has no peers!" << endlog();
+    return false;
   }
 
   // Reset the map
@@ -297,45 +317,44 @@ bool Dot::execute(){
     mpeer = peerList[i];
     log(Debug) <<"["<<i<<"] Component: " << mpeer << endlog();
     // Get a pointer to the taskcontext, which can be either a peer or the component itself.
-    TaskContext* tc;
-    if(this->getOwner()->getPeer(mpeer) == 0){
+    TaskContext* tc = this->getOwner()->getPeer(mpeer);
+    if(tc == 0)
+    {
       tc = this->getOwner();
     }
-    else{
-      tc = this->getOwner()->getPeer(mpeer);
-    }
 
-    base::TaskCore::TaskState st;
-    st = tc->getTaskState();
+    base::TaskCore::TaskState st = tc->getTaskState();
 
     std::string st_str,color;
-    switch (st){
+    switch (st)
+    {
         case base::TaskCore::Init          : st_str = "Init          ";color = "white";       break;
         case base::TaskCore::PreOperational: st_str = "PreOperational";color = "orange";      break;
         case base::TaskCore::FatalError    : st_str = "FatalError    ";color = "red";         break;
         case base::TaskCore::Exception     : st_str = "Exception     ";color = "red";         break;
         case base::TaskCore::Stopped       : st_str = "Stopped       ";color = "lightblue";   break;
-        case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";       break;
+        case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";     break;
         case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
     }
 
     m_dot << mpeer << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
-    buildComponentPortsMap("",tc->provides(),true,0);
+    int current_count = 0;
+    buildComponentInputPortsMap("",tc->provides(),current_count);
     m_dot << " } | | { ";
-    buildComponentPortsMap("",tc->provides(),false,0);
+    current_count = 0;
+    buildComponentOutputPortsMap("",tc->provides(),current_count);
     m_dot << "}}\"];\n";
   }
   // Loop over all peers + own component
-  for(unsigned int i = 0; i < peerList.size(); i++){
+  for(unsigned int i = 0; i < peerList.size(); i++)
+  {
     mpeer = peerList[i];
     log(Debug) <<"["<<i<<"] Component: " << mpeer << endlog();
     // Get a pointer to the taskcontext, which can be either a peer or the component itself.
-    TaskContext* tc;
-    if(this->getOwner()->getPeer(mpeer) == 0){
+    TaskContext* tc = this->getOwner()->getPeer(mpeer);
+    if(this->getOwner()->getPeer(mpeer) == 0)
+    {
       tc = this->getOwner();
-    }
-    else{
-      tc = this->getOwner()->getPeer(mpeer);
     }
 
     // Draw in/out ports
@@ -343,12 +362,14 @@ bool Dot::execute(){
   }
   m_dot << "}\n";
   std::ofstream fl(m_dot_file.c_str());
-  if (fl.is_open()){
+  if (fl.is_open())
+  {
     fl << m_dot.str();
     fl.close();
     return true;
   }
-  else{
+  else
+  {
     log(Debug) << "Unable to open file: " << m_dot_file << endlog();
     return false;
   }
