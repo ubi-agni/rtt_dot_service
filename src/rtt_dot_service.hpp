@@ -46,6 +46,17 @@
 #include <rtt/base/TaskCore.hpp>
 #include <rtt/RTT.hpp>
 
+struct ConnInfo
+{
+    std::string comp_in;
+    std::string comp_out;
+    std::string services;
+    std::string dot_tag;
+    RTT::base::PortInterface* port_in;
+    RTT::base::PortInterface* port_out;
+};
+
+
 class Dot : public RTT::Service, public RTT::base::ExecutableInterface {
   public:
     // Constructor
@@ -71,13 +82,14 @@ class Dot : public RTT::Service, public RTT::base::ExecutableInterface {
     //@}
   private:
     // Component name , with portname + shortcut (i0, o0 etc)
-    std::map<std::string,std::map<std::string,std::string> > comp_ports_map;
+    std::map<std::string, std::vector<ConnInfo> > comp_ports_map;
     std::stringstream m_dot;
-    std::string mpeer;
     std::string quote(std::string const& name);
-    void scanService(std::string path, Service::shared_ptr sv);
-    void buildComponentInputPortsMap(string path, RTT::Service::shared_ptr sv, int& current_count);
-    void buildComponentOutputPortsMap(string path, RTT::Service::shared_ptr sv, int& current_count);
+    void scanService(std::string path, RTT::Service::shared_ptr sv);
+    void buildConnectionMap(const string& component_name, RTT::Service::shared_ptr sv);
+    void buildComponentInputPortsMap(string component_name, string path, RTT::Service::shared_ptr sv, int& current_count);
+    void buildComponentOutputPortsMap(string component_name, string path, RTT::Service::shared_ptr sv, int& current_count);
     std::string appendToPath(const std::string& path,const std::string& sub);
+    std::string subPath(const std::string& total_path, const std::string& component_name);
 };
 #endif
