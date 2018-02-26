@@ -75,9 +75,9 @@ class Dot : public RTT::Service, public RTT::base::ExecutableInterface {
     std::stringstream m_dot;
     std::string mpeer;
     std::string quote(std::string const& name);
-    void scanService(std::string path, Service::shared_ptr sv);
-    void buildComponentInputPortsMap(string path, RTT::Service::shared_ptr sv, int& current_count);
-    void buildComponentOutputPortsMap(string path, RTT::Service::shared_ptr sv, int& current_count);
+    void scanService(std::string path, RTT::Service::shared_ptr sv);
+    void buildComponentInputPortsMap(std::string path, RTT::Service::shared_ptr sv, int& current_count);
+    void buildComponentOutputPortsMap(std::string path, RTT::Service::shared_ptr sv, int& current_count);
     std::string appendToPath(const std::string& path,const std::string& sub);
 };
 #endif
