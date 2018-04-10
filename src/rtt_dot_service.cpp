@@ -337,7 +337,7 @@ bool Dot::execute()
         case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
     }
 
-    m_dot << mpeer << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
+    m_dot << quote(mpeer) << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
     int current_count = 0;
     buildComponentInputPortsMap("",tc->provides(),current_count);
     m_dot << " } | | { ";
