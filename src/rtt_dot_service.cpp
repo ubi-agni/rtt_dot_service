@@ -312,6 +312,8 @@ bool Dot::execute()
   // Reset the map
   comp_ports_map.clear();
 
+  // List all peers of that are not meta components
+  std::vector<std::string> clear_peerList;
   for(unsigned int i = 0; i < peerList.size(); i++)
   {
     mpeer = peerList[i];
@@ -323,32 +325,72 @@ bool Dot::execute()
       tc = this->getOwner();
     }
 
-    base::TaskCore::TaskState st = tc->getTaskState();
-
-    std::string st_str,color;
-    switch (st)
+    // check if the component is a metacomponent
+    base::PropertyBase* pb = tc->getProperty("controller_name");
+    std::string *controller_name_ptr = NULL;
+    if (pb)
     {
-        case base::TaskCore::Init          : st_str = "Init          ";color = "white";       break;
-        case base::TaskCore::PreOperational: st_str = "PreOperational";color = "orange";      break;
-        case base::TaskCore::FatalError    : st_str = "FatalError    ";color = "red";         break;
-        case base::TaskCore::Exception     : st_str = "Exception     ";color = "red";         break;
-        case base::TaskCore::Stopped       : st_str = "Stopped       ";color = "lightblue";   break;
-        case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";     break;
-        case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
+      controller_name_ptr = static_cast<std::string*>(pb->getDataSource()->getRawPointer());
+    }
+    // extract its namespace at the same time if exists
+    pb = tc->getProperty("namespace");
+    std::string *controller_namespace_ptr = NULL;
+    if (pb)
+    {
+      controller_namespace_ptr = static_cast<std::string*>(pb->getDataSource()->getRawPointer());
     }
 
-    m_dot << quote(mpeer) << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
-    int current_count = 0;
-    buildComponentInputPortsMap("",tc->provides(),current_count);
-    m_dot << " } | | { ";
-    current_count = 0;
-    buildComponentOutputPortsMap("",tc->provides(),current_count);
-    m_dot << "}}\"];\n";
+    // if yes
+    if (controller_name_ptr)
+    {
+      // generate the meta component dot data
+      std::string cluster_name = "";
+      if (controller_namespace_ptr)
+        cluster_name += *controller_namespace_ptr + "_";
+      cluster_name += *controller_name_ptr;
+
+      m_dot << "subgraph " << quote("cluster_" + cluster_name) << "{\n label=" << quote(cluster_name) << ";\n";
+
+      // get peers of the meta component
+      std::vector<std::string> meta_peerList = tc->getPeerList();
+      for(unsigned int j = 0; j < meta_peerList.size(); j++)
+      {
+        if (meta_peerList[j] != getOwnerName())
+          m_dot << "\t" << meta_peerList[j] << ";\n";
+      }
+      m_dot << "}\n";
+    }
+    else
+    {
+      clear_peerList.push_back(peerList[i]);
+      // if not, proceed the standard way
+      base::TaskCore::TaskState st = tc->getTaskState();
+
+      std::string st_str,color;
+      switch (st)
+      {
+          case base::TaskCore::Init          : st_str = "Init          ";color = "white";       break;
+          case base::TaskCore::PreOperational: st_str = "PreOperational";color = "orange";      break;
+          case base::TaskCore::FatalError    : st_str = "FatalError    ";color = "red";         break;
+          case base::TaskCore::Exception     : st_str = "Exception     ";color = "red";         break;
+          case base::TaskCore::Stopped       : st_str = "Stopped       ";color = "lightblue";   break;
+          case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";     break;
+          case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
+      }
+
+      m_dot << quote(mpeer) << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
+      int current_count = 0;
+      buildComponentInputPortsMap("",tc->provides(),current_count);
+      m_dot << " } | | { ";
+      current_count = 0;
+      buildComponentOutputPortsMap("",tc->provides(),current_count);
+      m_dot << "}}\"];\n";
+    }
   }
   // Loop over all peers + own component
-  for(unsigned int i = 0; i < peerList.size(); i++)
+  for(unsigned int i = 0; i < clear_peerList.size(); i++)
   {
-    mpeer = peerList[i];
+    mpeer = clear_peerList[i];
     log(Debug) <<"["<<i<<"] Component: " << mpeer << endlog();
     // Get a pointer to the taskcontext, which can be either a peer or the component itself.
     TaskContext* tc = this->getOwner()->getPeer(mpeer);
