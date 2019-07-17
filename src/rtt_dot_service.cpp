@@ -260,12 +260,23 @@ void Dot::buildComponentInputPortsMap(std::string path, Service::shared_ptr sv, 
     for(auto port : sv->getPortNames())
     {
         std::cout << "     port " << port << endlog();
-        bool is_input_port = (dynamic_cast<base::InputPortInterface*>(sv->getPort(port)) != 0);
-        if(is_input_port)
+
+        base::InputPortInterface* input_port = dynamic_cast<base::InputPortInterface*>(sv->getPort(port));
+        if(input_port != 0)
         {
-            log(Debug) << "         ---> is input" << endlog();
-            comp_ports_map[mpeer][port] = "i" + std::to_string(current_count);
-            m_dot << (current_count>0 ? " | ":"") << "<i" << std::to_string(current_count) <<">"<< port;
+            // look if it is an event port (there is no way to find out except if the port has this info manually added in the description)
+            if (input_port->getDescription().find("eventport") != std::string::npos)
+            {
+              log(Debug) << "         ---> is input+event" << endlog();
+              comp_ports_map[mpeer][port] = "e" + std::to_string(current_count);
+              m_dot << (current_count>0 ? " | ":"") << "<e" << std::to_string(current_count) <<">⤴"<< port;
+            }
+            else
+            {
+              log(Debug) << "         ---> is input" << endlog();
+              comp_ports_map[mpeer][port] = "i" + std::to_string(current_count);
+              m_dot << (current_count>0 ? " | ":"") << "<i" << std::to_string(current_count) <<">"<< port;
+            }
             current_count++;
         }
     }
@@ -377,9 +388,16 @@ bool Dot::execute()
           case base::TaskCore::Running       : st_str = "Running       ";color = "#4ec167";     break;
           case base::TaskCore::RunTimeError  : st_str = "RunTimeError  ";color = "red";         break;
       }
-
-      m_dot << quote(mpeer) << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N|{{";
+      // also add the period
+      double period = tc->getPeriod();
+      std::string period_str;
+      if (period != 0.0)
+      {
+        period_str = " (" + std::to_string(period) + ")";
+      }
+      m_dot << quote(mpeer) << "[shape=record,fillcolor=\""<<color<<"\",label=\"\\N" << period_str <<"|{{";
       int current_count = 0;
+      // Note: There is no way to check if an input port is an event port or not.
       buildComponentInputPortsMap("",tc->provides(),current_count);
       m_dot << " } | | { ";
       current_count = 0;
